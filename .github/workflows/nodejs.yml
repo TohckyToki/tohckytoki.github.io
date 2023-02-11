@@ -1,0 +1,64 @@
+name: Node CI
+
+on:
+  push:
+    branches: 
+      - src
+  pull_request:
+    branches:
+      - src
+
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@main
+    - run: yarn
+    - run: yarn build
+    - name: Change to main
+      run: 
+        git add -- docs/.vuepress/dist/* &&
+        git stash push  &&
+        git fetch &&
+        git checkout main
+    - name: Delete All
+      run: 
+        Get-ChildItem -Path "./" -Recurse -Directory | ForEach-Object -Process { Remove-Item -Path $_.FullName -Recurse -Force };
+        Get-ChildItem -Path "./" -Recurse -File | ForEach-Object -Process { Remove-Item -Path $_.FullName -Force };
+      shell: pwsh
+    - name: Restore nojekyll
+      run: 
+        git checkout -q -- .nojekyll  &&
+        git stash pop
+    - name: Correct directory
+      run: 
+        Get-ChildItem -Path "docs/.vuepress/dist" -Recurse -Directory | ForEach-Object -Process { $Path = ("./" + [regex]::Replace($_.FullName, "^.*dist/", "")); if(!(Test-Path $Path)) { New-Item -Path $Path -ItemType Directory -Force }};
+        Get-ChildItem -Path "docs/.vuepress/dist" -Recurse -File | ForEach-Object -Process { Move-Item $_.FullName  ("./" + [regex]::Replace($_.FullName, "^.*dist/", "")) -Force };
+        Remove-Item -Path "docs" -Recurse -Force;
+      shell: pwsh
+    - name: Git Config
+      run: 
+        git config pull.rebase false &&
+        git config pull.rebase true &&
+        git config pull.ff only
+
+    - name: Git Set account
+      run:
+        git config --global user.email "action@github.com" &&
+        git config --global user.name "GitHub Action"
+    - name: Git Commit
+      run:
+        git add -- ./ &&
+        git commit -m Updated
+    - name: Git pull
+      run:
+        git pull origin main --rebase
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main
