@@ -1,0 +1,1 @@
+const e=JSON.parse('{"key":"v-57c5dbb5","path":"/category/blog/","title":"Blog \u5206\u7C7B","lang":"zh-CN","frontmatter":{"title":"Blog \u5206\u7C7B","blog":{"type":"category","name":"Blog","key":"category"},"layout":"Blog"},"excerpt":"","headers":[],"git":{},"readingTime":{"minutes":0,"words":0},"filePathRelative":null}');export{e as data};
